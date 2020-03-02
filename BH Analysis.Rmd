@@ -56,7 +56,11 @@ BH$position<- BHData$position
 
 Test plot (position over time):
 ```{r}
-#BHtest<-subset(BH, BH$id<1000)
 ggplot(data = BH, aes(x= X,y=Y,color= datetime)) + geom_point()
+```
+
+```{r}
+?by()
+by(BHtest$time,BH$irlynx_id,summary)
 ```
 
