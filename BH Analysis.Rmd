@@ -54,7 +54,7 @@ BH$position<- BHData$position
 ```
 
 
-Test plot (position over time) for first 999 rows:
+Test plot (position over time):
 ```{r}
 #BHtest<-subset(BH, BH$id<1000)
 ggplot(data = BH, aes(x= X,y=Y,color= datetime)) + geom_point()
