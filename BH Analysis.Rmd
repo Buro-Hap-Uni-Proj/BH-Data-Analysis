@@ -57,29 +57,37 @@ BH$position<- BHData$position
 ```
 
 
-Test plot (position over time):
+Plot (position over time):
 ```{r}
-ggplot(data = BH, aes(x= -Y,y=-X,color= datetime)) + geom_point()
+ggplot(data = BH, aes(x= -Y,y=-X,color= datetime)) +
+  geom_point(alpha=1/100)
 ```
 Test Data (1000 rows):
 ```{r}
-BHT<-subset(BH, BH$id<4134925)
-BHT$irlynx_id<-as.character(BHT$irlynx_id)
-str(BHT)
+#BHT<-subset(BH, BH$id<4134925)
+#BHT$irlynx_id<-as.character(BHT$irlynx_id)
+#str(BHT)
 ```
 
-Journey Time
+Journey Time:
 ```{r}
-
-max<-data.frame(tapply(BHT$datetime,BHT$irlynx_id,max))
-min<-data.frame(tapply(BHT$datetime,BHT$irlynx_id,min))
-jt<-merge(max,min,by ="row.names")
-jt$journeytime<-(jt$tapply.BHT.datetime..BHT.irlynx_id..max.-jt$tapply.BHT.datetime..BHT.irlynx_id..min.)
-sum(jt$journeytime)/3600
-max(jt$journeytime)/3600
-jtest<-subset(jt,jt$journeytime==max(jt$journeytime))
-test<-subset(BH,BH$irlynx_id=="436d2c08-c27b-4519-8217-cfa0474a11b7")
-
+maxtime<-data.frame(tapply(BH$datetime,BH$irlynx_id,max))
+mintime<-data.frame(tapply(BH$datetime,BH$irlynx_id,min))
+journeys<-merge(maxtime,mintime,by ="row.names")
+journeys$irlynx_id<-journeys$Row.names
+journeys$Row.names<-NULL
+journeys$max<-journeys$tapply.BH.datetime..BH.irlynx_id..max.
+journeys$tapply.BH.datetime..BH.irlynx_id..max.<-NULL
+journeys$min<-journeys$tapply.BH.datetime..BH.irlynx_id..min.
+journeys$tapply.BH.datetime..BH.irlynx_id..min.<-NULL
+journeys$journeytime<-(journeys$max-journeys$min)
+sum(journeys$journeytime)/3600
 ```
-
+Number of Employees:
+```{r}
+BH$irlynx_id<-as.character(BH$irlynx_id)
+by(BH$id,BH$time,mean)
+n<-data.frame(tapply(BH$id,as.factor(BH$time),count))
+n
+```
 
