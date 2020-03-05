@@ -87,7 +87,13 @@ Number of Employees:
 ```{r}
 BH$irlynx_id<-as.character(BH$irlynx_id)
 by(BH$id,BH$time,mean)
-n<-data.frame(tapply(BH$id,as.factor(BH$time),count))
-n
+?tally
+n<-data.frame(tapply(BH$irlynx_id,as.factor(BH$time),tally))
+df<-subset(BH,BH$id<1000)
+test<-df %>% select(irlynx_id, datetime) %>% 
+     group_by(datetime) %>% 
+     mutate(irlynx_id.count = n()) %>% 
+     slice(1)
+test
 ```
 
