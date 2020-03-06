@@ -25,9 +25,9 @@ library(tidyr)
 Getting File:
 ```{r}
 #Depending on Computer:
-#setwd('/users/marckennedy/desktop')
+setwd('/users/marckennedy/desktop')
 getwd()
-setwd('/Users/Marc/Desktop')
+#setwd('/Users/Marc/Desktop')
 BHData<-read.csv(file='BHDATA.csv')
 #BHData
 ```
@@ -59,8 +59,8 @@ BH$position<- BHData$position
 
 Plot (position over time):
 ```{r}
-ggplot(data = BH, aes(x= -Y,y=-X,color= datetime)) +
-  geom_point(alpha=1/100)
+#ggplot(data = BH, aes(x= -Y,y=-X,color= datetime)) +
+  #geom_point(alpha=1/100)
 ```
 Test Data (1000 rows):
 ```{r}
@@ -83,17 +83,25 @@ journeys$tapply.BH.datetime..BH.irlynx_id..min.<-NULL
 journeys$journeytime<-(journeys$max-journeys$min)
 sum(journeys$journeytime)/3600
 ```
+
 Number of Employees:
 ```{r}
-BH$irlynx_id<-as.character(BH$irlynx_id)
-by(BH$id,BH$time,mean)
-?tally
+#BH$irlynx_id<-as.character(BH$irlynx_id)
+#by(BH$id,BH$time,mean)
+#?tally
 n<-data.frame(tapply(BH$irlynx_id,as.factor(BH$time),tally))
-df<-subset(BH,BH$id<1000)
-test<-df %>% select(irlynx_id, datetime) %>% 
+#df<-subset(BH,BH$id<10)
+test<-BH %>% select(irlynx_id, datetime) %>% 
      group_by(datetime) %>% 
      mutate(irlynx_id.count = n()) %>% 
      slice(1)
 test
+test$timeofday <- strftime(test$datetime, format="%H:%M:%S")
+test$date<-strftime(test$datetime, format="%Y:%m:%d")
+max(test$irlynx_id.count)
+mean(test$irlynx_id.count)
+ggplot(data=test,aes(y=irlynx_id.count,x=datetime))+geom_point()
+oneday<-subset(test,head)
+
 ```
 
