@@ -95,13 +95,17 @@ test<-BH %>% select(irlynx_id, datetime) %>%
      group_by(datetime) %>% 
      mutate(irlynx_id.count = n()) %>% 
      slice(1)
+library(data.table)
 test
-test$timeofday <- strftime(test$datetime, format="%H:%M:%S")
-test$date<-strftime(test$datetime, format="%Y:%m:%d")
+test$timeofday <- as.ITime(test$datetime)
+test$date<-as.IDate(test$datetime)
 max(test$irlynx_id.count)
 mean(test$irlynx_id.count)
-ggplot(data=test,aes(y=irlynx_id.count,x=datetime))+geom_point()
-oneday<-subset(test,head)
-
+#ggplot(data=test,aes(y=irlynx_id.count,x=datetime))+geom_point()
+oneday<-head(test,1000)
+ggplot(data=oneday,aes(x=oneday$timeofday,y=oneday$irlynx_id.count))+
+  geom_line()+
+  scale_x_continuous(breaks = seq(min(oneday$timeofday),max(oneday$timeofday),30))+
+  scale_y_continuous(breaks = seq(0,70,1))
 ```
 
