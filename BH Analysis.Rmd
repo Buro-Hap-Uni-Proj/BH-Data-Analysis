@@ -36,24 +36,19 @@ BHData<-read.csv(file='BHDATA.csv')
 #BHData
 ```
 
-Converting Time:
-```{r}
-BHData$datetime<-as.POSIXct((BHData$time)/1000, origin="1970-01-01")
-BHData$date<- as.IDate(BHData$datetime)
-BHData$time_of_day<-as.ITime(BHData$datetime)
-
-```
-
-Filtering for one day:
-```{r}
-TESTDATA<-subset(BHData,date=="2019-12-18")
-```
-
 Separating Position:
 ```{r}
 BH<- data.frame(separate(BHData,position, c("X", "Y"),","))
 BH$X2<-as.numeric(gsub("\\[","",BH$X))
 BH$Y2<-as.numeric(gsub("\\]","",BH$Y))
+```
+
+Converting Time:
+```{r}
+BH$datetime<-as.POSIXct((BH$time)/1000, origin="1970-01-01")
+BH$date<- as.IDate(BH$datetime)
+BH$time_of_day<-as.ITime(BH$datetime)
+
 ```
 
 Tidying Up Data:
@@ -67,11 +62,17 @@ BH$Y2<- NULL
 BH$position<- BHData$position
 ```
 
+Filtering for one day:
+```{r}
+TESTDATA<-subset(BH,date=="2019-12-18")
+```
+
 
 Plot (position over time):
 ```{r}
-#ggplot(data = BH, aes(x= -Y,y=-X,color= datetime)) +
-  #geom_point(alpha=1/100)
+ggplot(data = subset(TESTDATA, irlynx_id=="7e309451-902a-4ff9-a4ff-9014755018c8"), aes(x= -Y,y=-X,color= time))+
+  geom_point()+
+  scale_color_gradientn(colours = rainbow(10))
 ```
 
 Test Data (1000 rows):
@@ -83,28 +84,29 @@ Test Data (1000 rows):
 
 Journey Time:
 ```{r}
-maxtime<-data.frame(tapply(BH$datetime,BH$irlynx_id,max))
-mintime<-data.frame(tapply(BH$datetime,BH$irlynx_id,min))
+maxtime<-data.frame(tapply(TESTDATA$datetime,TESTDATA$irlynx_id,max))
+mintime<-data.frame(tapply(TESTDATA$datetime,TESTDATA$irlynx_id,min))
 journeys<-merge(maxtime,mintime,by ="row.names")
 journeys$irlynx_id<-journeys$Row.names
 journeys$Row.names<-NULL
-journeys$max<-journeys$tapply.BH.datetime..BH.irlynx_id..max.
-journeys$tapply.BH.datetime..BH.irlynx_id..max.<-NULL
-journeys$min<-journeys$tapply.BH.datetime..BH.irlynx_id..min.
-journeys$tapply.BH.datetime..BH.irlynx_id..min.<-NULL
+journeys$max<-journeys$tapply.TESTDATA.datetime..TESTDATA.irlynx_id..max.
+journeys$tapply.TESTDATA.datetime..TESTDATA.irlynx_id..max.<-NULL
+journeys$min<-journeys$tapply.TESTDATA.datetime..TESTDATA.irlynx_id..min.
+journeys$tapply.TESTDATA.datetime..TESTDATA.irlynx_id..min.<-NULL
 journeys$journeytime<-(journeys$max-journeys$min)
+journeys<-subset(journeys,!is.na(journeytime))
 sum(journeys$journeytime)/3600
-realjourneys<-subset(journeys,journeytime>0)
 journeys$journeytime_min<-(journeys$journeytime/60)
 journeys$journeytime_h<-(journeys$journeytime/3600)
-
-ggplot(data=realjourneys,aes(x=realjourneys$journeytime))+geom_histogram(binwidth = 10)+scale_y_continuous(limits = c(1,50))
+realjourneys<-subset(journeys,journeytime>0)
+summary(realjourneys$journeytime)
+ggplot(data=realjourneys,aes(x=realjourneys$journeytime))+geom_histogram(binwidth = 0.1)+scale_x_log10()
 
 ```
 
 Number of Employees per timestamp:
 ```{r}
-times<-group_by(BH,time)
+times<-group_by(TESTDATA,time)
 timeinfo<-summarise(times,
                     n=n())
 timeinfo$Ntime<-as.POSIXct((timeinfo$time)/1000, origin="1970-01-01")
@@ -113,7 +115,8 @@ timeinfo$Ndate <- as.IDate(timeinfo$Ntime)
 timeinfo$date <- as.numeric(as.POSIXct(timeinfo$Ndate))
 timeinfo$timeofday<-(timeinfo$time-timeinfo$date*1000)
 summary(timeinfo$n)
-#ggplot(data=timeinfo,aes(x=Ntod,y=n))+geom_point()
+#Plot of ids vs time:
+ggplot(data=timeinfo,aes(x=Ntod,y=n))+geom_point()
 ```
 
 (OLD) Number of Employees:
