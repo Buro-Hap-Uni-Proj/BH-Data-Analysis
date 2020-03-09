@@ -20,6 +20,7 @@ Required Libraries:
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(data.table)
 ```
 
 Getting File:
@@ -84,28 +85,44 @@ journeys$journeytime<-(journeys$max-journeys$min)
 sum(journeys$journeytime)/3600
 ```
 
-Number of Employees:
+Number of Employees per timestamp:
 ```{r}
-#BH$irlynx_id<-as.character(BH$irlynx_id)
-#by(BH$id,BH$time,mean)
-#?tally
-n<-data.frame(tapply(BH$irlynx_id,as.factor(BH$time),tally))
-#df<-subset(BH,BH$id<10)
-test<-BH %>% select(irlynx_id, datetime) %>% 
-     group_by(datetime) %>% 
-     mutate(irlynx_id.count = n()) %>% 
-     slice(1)
-library(data.table)
-test
-test$timeofday <- as.ITime(test$datetime)
-test$date<-as.IDate(test$datetime)
-max(test$irlynx_id.count)
-mean(test$irlynx_id.count)
-#ggplot(data=test,aes(y=irlynx_id.count,x=datetime))+geom_point()
-oneday<-head(test,1000)
-ggplot(data=oneday,aes(x=oneday$timeofday,y=oneday$irlynx_id.count))+
-  geom_line()+
-  scale_x_continuous(breaks = seq(min(oneday$timeofday),max(oneday$timeofday),30))+
-  scale_y_continuous(breaks = seq(0,70,1))
+times<-group_by(BH,time)
+timeinfo<-summarise(times,
+                    n=n())
+timeinfo$Ntime<-as.POSIXct((timeinfo$time)/1000, origin="1970-01-01")
+timeinfo$Ntod <- as.ITime(timeinfo$Ntime)
+timeinfo$Ndate <- as.IDate(timeinfo$Ntime)
+timeinfo$date <- as.numeric(as.POSIXct(timeinfo$date))
+timeinfo$timeofday<-(timeinfo$time-timeinfo$date*1000)
+summary(timeinfo$n)
+# ggplot(data=timeinfo,aes(x=timeofday,y=n))+geom_point()
+
 ```
+
+(OLD) Number of Employees:
+```{r}
+# BH$irlynx_id<-as.character(BH$irlynx_id)
+# by(BH$id,BH$time,mean)
+# ?tally
+# n<-data.frame(tapply(BH$irlynx_id,as.factor(BH$time),tally))
+# df<-subset(BH,BH$id<10)
+# test<-BH %>% select(irlynx_id, datetime) %>% 
+#      group_by(datetime) %>% 
+#      mutate(irlynx_id.count = n()) %>% 
+#      slice(1)
+# library(data.table)
+# test
+# test$timeofday <- as.ITime(test$datetime)
+# test$date<-as.IDate(test$datetime)
+# max(test$irlynx_id.count)
+# mean(test$irlynx_id.count)
+# ggplot(data=test,aes(y=irlynx_id.count,x=datetime))+geom_point()
+# oneday<-head(test,1000)
+# ggplot(data=oneday,aes(x=oneday$timeofday,y=oneday$irlynx_id.count))+
+#   geom_line()+
+#   scale_x_continuous(breaks = seq(min(oneday$timeofday),max(oneday$timeofday),30))+
+#   scale_y_continuous(breaks = seq(0,70,1))
+```
+
 
