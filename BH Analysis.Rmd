@@ -5,6 +5,8 @@ date: "28/02/2020"
 output: html_document
 ---
 
+FILTERED BY 18/12/19
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -21,6 +23,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(data.table)
+options(scipen = 999)
 ```
 
 Getting File:
@@ -36,11 +39,18 @@ BHData<-read.csv(file='BHDATA.csv')
 Converting Time:
 ```{r}
 BHData$datetime<-as.POSIXct((BHData$time)/1000, origin="1970-01-01")
+BHData$date<- as.IDate(BHData$datetime)
+BHData$time_of_day<-as.ITime(BHData$datetime)
+
+```
+
+Filtering for one day:
+```{r}
+TESTDATA<-subset(BHData,date=="2019-12-18")
 ```
 
 Separating Position:
 ```{r}
-BHData$datetime<-as.POSIXct((BHData$time)/1000, origin="1970-01-01")
 BH<- data.frame(separate(BHData,position, c("X", "Y"),","))
 BH$X2<-as.numeric(gsub("\\[","",BH$X))
 BH$Y2<-as.numeric(gsub("\\]","",BH$Y))
@@ -63,6 +73,7 @@ Plot (position over time):
 #ggplot(data = BH, aes(x= -Y,y=-X,color= datetime)) +
   #geom_point(alpha=1/100)
 ```
+
 Test Data (1000 rows):
 ```{r}
 #BHT<-subset(BH, BH$id<4134925)
@@ -83,6 +94,12 @@ journeys$min<-journeys$tapply.BH.datetime..BH.irlynx_id..min.
 journeys$tapply.BH.datetime..BH.irlynx_id..min.<-NULL
 journeys$journeytime<-(journeys$max-journeys$min)
 sum(journeys$journeytime)/3600
+realjourneys<-subset(journeys,journeytime>0)
+journeys$journeytime_min<-(journeys$journeytime/60)
+journeys$journeytime_h<-(journeys$journeytime/3600)
+
+ggplot(data=realjourneys,aes(x=realjourneys$journeytime))+geom_histogram(binwidth = 10)+scale_y_continuous(limits = c(1,50))
+
 ```
 
 Number of Employees per timestamp:
@@ -93,11 +110,10 @@ timeinfo<-summarise(times,
 timeinfo$Ntime<-as.POSIXct((timeinfo$time)/1000, origin="1970-01-01")
 timeinfo$Ntod <- as.ITime(timeinfo$Ntime)
 timeinfo$Ndate <- as.IDate(timeinfo$Ntime)
-timeinfo$date <- as.numeric(as.POSIXct(timeinfo$date))
+timeinfo$date <- as.numeric(as.POSIXct(timeinfo$Ndate))
 timeinfo$timeofday<-(timeinfo$time-timeinfo$date*1000)
 summary(timeinfo$n)
-# ggplot(data=timeinfo,aes(x=timeofday,y=n))+geom_point()
-
+#ggplot(data=timeinfo,aes(x=Ntod,y=n))+geom_point()
 ```
 
 (OLD) Number of Employees:
