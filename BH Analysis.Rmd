@@ -154,4 +154,29 @@ ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
 #   scale_y_continuous(breaks = seq(0,70,1))
 ```
 
+Distance Travelled By ID
+```{r}
+
+
+ID_Count <- group_by(TESTDATA, irlynx_id)
+Counts <- summarise(ID_Count , n=n())
+Relevant_ids <- filter (Counts, n >= 2)
+list_ids <- Relevant_ids$irlynx_id
+list_ids <- unique(list_ids)
+
+d_total <- 0
+distances <- data_frame(ids = character(), distance = numeric())
+
+for (k in list_ids) {
+  one_dot <- filter (BH, irlynx_id==k)
+  one_dot <- one_dot[order(one_dot$time),]
+  imax <- nrow(one_dot) - 1
+  d <- 0 
+    for(i in 1:imax) {
+      d[i] <- sqrt( ((one_dot$X[i+1]-one_dot$X[i])*(one_dot$X[i+1]-one_dot$X[i]))+((one_dot$Y[i+1]-one_dot$Y[i])*(one_dot$Y[i+1]-one_dot$Y[i])))
+    }
+  d_total [k] <- sum(d, na.rm = FALSE)
+  distances <- rbind(distances, data.frame(ids = k, distance = d_total[k]))
+}
+```
 
