@@ -81,12 +81,6 @@ ggplot(data = TESTDATA, aes(x= -Y,y=-X,color= time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))
 ```
 
-Test Data (1000 rows):
-```{r}
-#BHT<-subset(BH, BH$id<4134925)
-#BHT$irlynx_id<-as.character(BHT$irlynx_id)
-#str(BHT)
-```
 
 Journey Time:
 ```{r}
@@ -105,7 +99,7 @@ sum(journeys$journeytime)/3600
 journeys$journeytime_min<-(journeys$journeytime/60)
 journeys$journeytime_h<-(journeys$journeytime/3600)
 realjourneys<-subset(journeys,journeytime>0)
-summary(realjourneys$journeytime)
+sum(realjourneys$journeytime_min)
 ggplot(data=realjourneys,aes(x=realjourneys$journeytime))+geom_histogram(binwidth = 0.1)+scale_x_log10()
 
 ```
@@ -129,29 +123,5 @@ ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
   ylab("Number of Heat Sources")
 ```
 
-(OLD) Number of Employees:
-```{r}
-# BH$irlynx_id<-as.character(BH$irlynx_id)
-# by(BH$id,BH$time,mean)
-# ?tally
-# n<-data.frame(tapply(BH$irlynx_id,as.factor(BH$time),tally))
-# df<-subset(BH,BH$id<10)
-# test<-BH %>% select(irlynx_id, datetime) %>% 
-#      group_by(datetime) %>% 
-#      mutate(irlynx_id.count = n()) %>% 
-#      slice(1)
-# library(data.table)
-# test
-# test$timeofday <- as.ITime(test$datetime)
-# test$date<-as.IDate(test$datetime)
-# max(test$irlynx_id.count)
-# mean(test$irlynx_id.count)
-# ggplot(data=test,aes(y=irlynx_id.count,x=datetime))+geom_point()
-# oneday<-head(test,1000)
-# ggplot(data=oneday,aes(x=oneday$timeofday,y=oneday$irlynx_id.count))+
-#   geom_line()+
-#   scale_x_continuous(breaks = seq(min(oneday$timeofday),max(oneday$timeofday),30))+
-#   scale_y_continuous(breaks = seq(0,70,1))
-```
 
 
