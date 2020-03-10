@@ -100,8 +100,8 @@ journeys$journeytime_min<-(journeys$journeytime/60)
 journeys$journeytime_h<-(journeys$journeytime/3600)
 realjourneys<-subset(journeys,journeytime>0)
 sum(realjourneys$journeytime_min)
-ggplot(data=realjourneys,aes(x=realjourneys$journeytime))+geom_histogram(binwidth = 0.1)+scale_x_log10()
-
+realjourneys2<-subset(realjourneys,journeytime>5)
+ggplot(data=realjourneys2,aes(x=realjourneys2$journeytime))+geom_histogram(binwidth = 0.05)+scale_x_log10()
 ```
 
 Number of Employees per timestamp:
@@ -124,21 +124,21 @@ ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
 ```
 
 
-Distance Travelled By ID
+Distance Travelled By ID:
 ```{r}
 
 
 ID_Count <- group_by(TESTDATA, irlynx_id)
 Counts <- summarise(ID_Count , n=n())
 Relevant_ids <- filter (Counts, n >= 2)
-list_ids <- Relevant_ids$irlynx_id
+list_ids <- as.character(Relevant_ids$irlynx_id)
 list_ids <- unique(list_ids)
 
 d_total <- 0
 distances <- data_frame(ids = character(), distance = numeric())
 
 for (k in list_ids) {
-  one_dot <- filter (BH, irlynx_id==k)
+  one_dot <- filter (TESTDATA, irlynx_id==k)
   one_dot <- one_dot[order(one_dot$time),]
   imax <- nrow(one_dot) - 1
   d <- 0 
@@ -148,5 +148,12 @@ for (k in list_ids) {
   d_total [k] <- sum(d, na.rm = FALSE)
   distances <- rbind(distances, data.frame(ids = k, distance = d_total[k]))
 }
+
+max(distances$distance)
+```
+
+Test Plot of distance distribution:
+```{r}
+ggplot(data = distances,aes(x=distance))+geom_histogram(bindwidth=10)
 ```
 
