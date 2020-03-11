@@ -72,13 +72,13 @@ TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & dateti
 
 Plot (position over time):
 ```{r}
-ggplot(data = TESTDATA, aes(x= -Y,y=-X,color= time,group=irlynx_id))+
-  #geom_point(size=0.1)+
-  #geom_line(size=0.5)+
-  #xlim(-500,0)+
-  #ylim(-500,0)+
-  geom_path()+
-  scale_color_gradientn(colours = rainbow(10))
+# ggplot(data = TESTDATA, aes(x= -Y,y=-X,color= time,group=irlynx_id))+
+#   #geom_point(size=0.1)+
+#   #geom_line(size=0.5)+
+#   #xlim(-500,0)+
+#   #ylim(-500,0)+
+#   geom_path()+
+#   scale_color_gradientn(colours = rainbow(10))
 ```
 
 
@@ -101,7 +101,7 @@ journeys$journeytime_h<-(journeys$journeytime/3600)
 realjourneys<-subset(journeys,journeytime>0)
 sum(realjourneys$journeytime_min)
 realjourneys2<-subset(realjourneys,journeytime>5)
-ggplot(data=realjourneys2,aes(x=realjourneys2$journeytime))+geom_histogram(binwidth = 0.05)+scale_x_log10()
+# ggplot(data=realjourneys2,aes(x=realjourneys2$journeytime))+geom_histogram(binwidth = 0.05)+scale_x_log10()
 ```
 
 Number of Employees per timestamp:
@@ -116,11 +116,11 @@ timeinfo$date <- as.numeric(as.POSIXct(timeinfo$Ndate))
 timeinfo$timeofday<-(timeinfo$time-timeinfo$date*1000)
 summary(timeinfo$n)
 #Plot of ids vs time:
-ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
-  geom_point()+
-  scale_x_continuous(breaks = seq(0,24,1))+
-  xlab("Time of Day /h ")+
-  ylab("Number of Heat Sources")
+# ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
+#   geom_point()+
+#   scale_x_continuous(breaks = seq(0,24,1))+
+#   xlab("Time of Day /h ")+
+#   ylab("Number of Heat Sources")
 ```
 
 
@@ -151,6 +151,18 @@ for (k in list_ids) {
 
 max(distances$distance)
 ```
+
+Combining time and distance:
+```{r}
+realdistance<-subset(distances,distances$distance>0)
+time_distance<-merge(realdistance,realjourneys,by.x = "ids",by.y = "irlynx_id")
+write.csv(time_distance,"BH_time_distance.csv")
+ggplot(data = time_distance, aes(x=journeytime_min,y=distance))+
+  geom_point()+
+  xlim(0,5)+
+  ylim(0,250)
+```
+
 
 Test Plot of distance distribution:
 ```{r}
