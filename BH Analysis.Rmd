@@ -24,6 +24,8 @@ library(dplyr)
 library(tidyr)
 library(data.table)
 library(lubridate)
+library(ggthemes)
+library(pacman)
 options(scipen = 999)
 ```
 
@@ -72,13 +74,32 @@ TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & dateti
 
 Plot (position over time):
 ```{r}
-# ggplot(data = TESTDATA, aes(x= -Y,y=-X,color= time,group=irlynx_id))+
-#   #geom_point(size=0.1)+
-#   #geom_line(size=0.5)+
-#   #xlim(-500,0)+
-#   #ylim(-500,0)+
-#   geom_path()+
-#   scale_color_gradientn(colours = rainbow(10))
+img.file <- system.file(file.path("/users/marckennedy/desktop", "Floorplan with labels.png"),
+                       package = "ggpubr")
+img <- readPNG(img.file)
+image<-png::readPNG("Floorplan with labels.png")
+img<-rasterGrob(image)
+background_image(raster.img)
+ggplot(data = head(TESTDATA,5), aes(x= -Y,y=-X,color= time,group=irlynx_id))+
+  geom_point(size=0.1)+
+  background_image(image)+
+  #scale_color_gradientn(colours = rainbow(10))+
+  scale_x_continuous(breaks = seq(-500,0,10))+
+  scale_y_continuous(breaks = seq(-600,0,10))+
+  xlab("x pos")+
+  ylab("ypos")
+  #geom_line(size=0.5)+
+  #xlim(-500,0)+
+  #ylim(-500,0)+
+  #geom_path()+
+plot.new() 
+rasterImage(image,1,0,1,1)
+  
+```
+
+Layout:
+```{r}
+geom_segment(aes(x = ))
 ```
 
 
@@ -161,6 +182,15 @@ ggplot(data = time_distance, aes(x=journeytime_min,y=distance))+
   geom_point()+
   xlim(0,5)+
   ylim(0,250)
+```
+
+
+```{r}
+setwd('/users/marckennedy/desktop')
+time_distance<-read.csv(file='BH_time_distance.csv')
+time_distance$speed<-time_distance$distance/time_distance$journeytime
+mean(time_distance$speed)
+median(time_distance$speed)
 ```
 
 
