@@ -27,6 +27,8 @@ library(lubridate)
 library(ggthemes)
 library(pacman)
 options(scipen = 999)
+library(sp)
+library(rgeos)
 ```
 
 Getting File:
@@ -37,11 +39,13 @@ getwd()
 #setwd('/Users/Marc/Desktop')
 BHData<-read.csv(file='BHDATA.csv')
 #BHData
+BH<-unique(BHData[ , 2:6])
+
 ```
 
 Separating Position:
 ```{r}
-BH<- data.frame(separate(BHData,position, c("X", "Y"),","))
+BH<- data.frame(separate(BH,position, c("X", "Y"),","))
 BH$X2<-as.numeric(gsub("\\[","",BH$X))
 BH$Y2<-as.numeric(gsub("\\]","",BH$Y))
 ```
@@ -61,12 +65,10 @@ BH$X<- BH$X2
 BH$Y<- BH$Y2
 BH$X2<- NULL
 BH$Y2<- NULL
-BH$position<- BHData$position
 ```
 
 Filtering for one day:
 ```{r}
-
 TESTDATA<-subset(BH,date=="2019-12-18")
 TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & datetime<=as.POSIXct("2019-12-18 17:00:00"))
 ```
@@ -74,26 +76,26 @@ TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & dateti
 
 Plot (position over time):
 ```{r}
-img.file <- system.file(file.path("/users/marckennedy/desktop", "Floorplan with labels.png"),
-                       package = "ggpubr")
-img <- readPNG(img.file)
-image<-png::readPNG("Floorplan with labels.png")
-img<-rasterGrob(image)
-background_image(raster.img)
-ggplot(data = head(TESTDATA,5), aes(x= -Y,y=-X,color= time,group=irlynx_id))+
-  geom_point(size=0.1)+
-  background_image(image)+
-  #scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(breaks = seq(-500,0,10))+
-  scale_y_continuous(breaks = seq(-600,0,10))+
-  xlab("x pos")+
-  ylab("ypos")
-  #geom_line(size=0.5)+
-  #xlim(-500,0)+
-  #ylim(-500,0)+
-  #geom_path()+
-plot.new() 
-rasterImage(image,1,0,1,1)
+# img.file <- system.file(file.path("/users/marckennedy/desktop", "Floorplan with labels.png"),
+#                        package = "ggpubr")
+# img <- readPNG(img.file)
+# image<-png::readPNG("Floorplan with labels.png")
+# img<-rasterGrob(image)
+# background_image(raster.img)
+# ggplot(data = head(TESTDATA,5), aes(x= -Y,y=-X,color= time,group=irlynx_id))+
+#   geom_point(size=0.1)+
+#   background_image(image)+
+#   #scale_color_gradientn(colours = rainbow(10))+
+#   scale_x_continuous(breaks = seq(-500,0,10))+
+#   scale_y_continuous(breaks = seq(-600,0,10))+
+#   xlab("x pos")+
+#   ylab("ypos")
+#   #geom_line(size=0.5)+
+#   #xlim(-500,0)+
+#   #ylim(-500,0)+
+#   #geom_path()+
+# plot.new() 
+# rasterImage(image,1,0,1,1)
   
 ```
 
@@ -186,16 +188,29 @@ ggplot(data = time_distance, aes(x=journeytime_min,y=distance))+
 
 
 ```{r}
-setwd('/users/marckennedy/desktop')
-time_distance<-read.csv(file='BH_time_distance.csv')
-time_distance$speed<-time_distance$distance/time_distance$journeytime
-mean(time_distance$speed)
-median(time_distance$speed)
+# setwd('/users/marckennedy/desktop')
+# time_distance<-read.csv(file='BH_time_distance.csv')
+# time_distance$speed<-time_distance$distance/time_distance$journeytime
+# mean(time_distance$speed)
+# median(time_distance$speed)
 ```
 
 
 Test Plot of distance distribution:
 ```{r}
-ggplot(data = distances,aes(x=distance))+geom_histogram(bindwidth=10)
+#ggplot(data = distances,aes(x=distance))+geom_histogram(bindwidth=10)
+```
+
+Neighbours Testing:
+```{r}
+
+ntest<-subset(BH,time==1576666973854)
+sp.ntest<-ntest
+coordinates(sp.ntest) <- ~X+Y
+class(sp.ntest)
+d <- gDistance(sp.ntest, byid=T)
+min.d <- apply(d, 1, function(x) order(x, decreasing=F)[2])
+newdata <- cbind(ntest, ntest[min.d,], apply(d, 1, function(x) sort(x, decreasing=F)[2]))
+colnames(newdata) <- c(colnames(ntest),'neighbor irlynx_id','n.time','n.X','n.Y', '','','', 'distance')
 ```
 
