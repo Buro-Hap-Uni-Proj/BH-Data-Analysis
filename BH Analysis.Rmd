@@ -106,14 +106,14 @@ lapply(packs, require, character.only = TRUE)
 img <- readPNG("Floorplan with labels.png") 
 g <- rasterGrob(img, interpolate=TRUE) 
 TESTDATA$newY<-0.9*TESTDATA$Y
-ggplot(data = TESTDATA, aes(x= -Y,y=-X,color= time,group=irlynx_id))+
+ggplot(data = head(TESTDATA,400000), aes(x= -Y,y=-X,color= time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-500,-30),breaks = seq(-500,-30,50))+
-  scale_y_continuous(limits = c(-550,-40),breaks = seq(-550,-40,50))+
+  scale_x_continuous(limits = c(-490,20),breaks = seq(-490,0,50))+
+  scale_y_continuous(limits = c(-530,-60),breaks = seq(-500,-60,50))+
   xlab("xpos")+
   ylab("ypos")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
-  geom_point(size=0.1)
+  geom_point(size=0.5)
 ```
 
 
