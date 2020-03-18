@@ -73,47 +73,23 @@ TESTDATA<-subset(BH,date=="2019-12-18")
 TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & datetime<=as.POSIXct("2019-12-18 17:00:00"))
 ```
 
-
-Plot (position over time):
-```{r}
-# img.file <- system.file(file.path("/users/marckennedy/desktop", "Floorplan with labels.png"),
-#                        package = "ggpubr")
-# img <- readPNG(img.file)
-# image<-png::readPNG("Floorplan with labels.png")
-# img<-rasterGrob(image)
-# background_image(raster.img)
-# ggplot(data = head(TESTDATA,5), aes(x= -Y,y=-X,color= time,group=irlynx_id))+
-#   geom_point(size=0.1)+
-#   background_image(image)+
-#   #scale_color_gradientn(colours = rainbow(10))+
-#   scale_x_continuous(breaks = seq(-500,0,10))+
-#   scale_y_continuous(breaks = seq(-600,0,10))+
-#   xlab("x pos")+
-#   ylab("ypos")
-#   #geom_line(size=0.5)+
-#   #xlim(-500,0)+
-#   #ylim(-500,0)+
-#   #geom_path()+
-# plot.new() 
-# rasterImage(image,1,0,1,1)
-  
-```
-
-Layout:
+Layout Plots:
 ```{r}
 packs <- c("png","grid")
 lapply(packs, require, character.only = TRUE) 
 img <- readPNG("Floorplan with labels.png") 
 g <- rasterGrob(img, interpolate=TRUE) 
-TESTDATA$newY<-0.9*TESTDATA$Y
-ggplot(data = head(TESTDATA,400000), aes(x= -Y,y=-X,color= time,group=irlynx_id))+
+
+ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-490,20),breaks = seq(-490,0,50))+
+  scale_x_continuous(limits = c(-555,100),breaks = seq(-555,100,50))+
   scale_y_continuous(limits = c(-530,-60),breaks = seq(-500,-60,50))+
   xlab("xpos")+
   ylab("ypos")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
-  geom_point(size=0.5)
+  geom_path(size=0.1)+
+  #geom_point(size=0.1)+
+  theme(legend.position = "none")
 ```
 
 
@@ -161,8 +137,6 @@ summary(timeinfo$n)
 
 Distance Travelled By ID:
 ```{r}
-
-
 ID_Count <- group_by(TESTDATA, irlynx_id)
 Counts <- summarise(ID_Count , n=n())
 Relevant_ids <- filter (Counts, n >= 2)
@@ -176,7 +150,7 @@ for (k in list_ids) {
   one_dot <- filter (TESTDATA, irlynx_id==k)
   one_dot <- one_dot[order(one_dot$time),]
   imax <- nrow(one_dot) - 1
-  d <- 0 
+  d <- 0
     for(i in 1:imax) {
       d[i] <- sqrt( ((one_dot$X[i+1]-one_dot$X[i])*(one_dot$X[i+1]-one_dot$X[i]))+((one_dot$Y[i+1]-one_dot$Y[i])*(one_dot$Y[i+1]-one_dot$Y[i])))
     }
@@ -216,13 +190,13 @@ Test Plot of distance distribution:
 Neighbours Testing:
 ```{r}
 
-ntest<-subset(BH,time==1576666973854)
-sp.ntest<-ntest
-coordinates(sp.ntest) <- ~X+Y
-class(sp.ntest)
-d <- gDistance(sp.ntest, byid=T)
-min.d <- apply(d, 1, function(x) order(x, decreasing=F)[2])
-newdata <- cbind(ntest, ntest[min.d,], apply(d, 1, function(x) sort(x, decreasing=F)[2]))
-colnames(newdata) <- c(colnames(ntest),'neighbor irlynx_id','n.time','n.X','n.Y', '','','', 'distance')
+# ntest<-subset(BH,time==1576666973854)
+# sp.ntest<-ntest
+# coordinates(sp.ntest) <- ~X+Y
+# class(sp.ntest)
+# d <- gDistance(sp.ntest, byid=T)
+# min.d <- apply(d, 1, function(x) order(x, decreasing=F)[2])
+# newdata <- cbind(ntest, ntest[min.d,], apply(d, 1, function(x) sort(x, decreasing=F)[2]))
+# colnames(newdata) <- c(colnames(ntest),'neighbor irlynx_id','n.time','n.X','n.Y', '','','', 'distance')
 ```
 
