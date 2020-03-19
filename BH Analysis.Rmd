@@ -77,21 +77,23 @@ Layout Plots:
 ```{r}
 packs <- c("png","grid")
 lapply(packs, require, character.only = TRUE) 
-img <- readPNG("Floorplan with labels.png") 
+img <- readPNG("Layout.png") 
 g <- rasterGrob(img, interpolate=TRUE) 
+subset(TESTDATA, X=56)
 
 ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-555,100),breaks = seq(-555,100,50))+
-  scale_y_continuous(limits = c(-530,-60),breaks = seq(-500,-60,50))+
+  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
+  scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
   xlab("xpos")+
   ylab("ypos")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
-  geom_path(size=0.1)+
-  #geom_point(size=0.1)+
+  #geom_path(size=0.1)+
+  geom_point(size=0.1)+
   theme(legend.position = "none")
 ```
 
+1 UNIT = 0.052 m
 
 Journey Time:
 ```{r}
@@ -126,12 +128,16 @@ timeinfo$Ndate <- as.IDate(timeinfo$Ntime)
 timeinfo$date <- as.numeric(as.POSIXct(timeinfo$Ndate))
 timeinfo$timeofday<-(timeinfo$time-timeinfo$date*1000)
 summary(timeinfo$n)
-#Plot of ids vs time:
-# ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
-#   geom_point()+
-#   scale_x_continuous(breaks = seq(0,24,1))+
-#   xlab("Time of Day /h ")+
-#   ylab("Number of Heat Sources")
+
+```
+
+Plot of ids vs time:
+```{r}
+ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
+  geom_path()+
+  scale_x_continuous(breaks = seq(0,24,1))+
+  xlab("Time of Day /h ")+
+  ylab("Number of Heat Sources")
 ```
 
 
@@ -157,8 +163,15 @@ for (k in list_ids) {
   d_total [k] <- sum(d, na.rm = FALSE)
   distances <- rbind(distances, data.frame(ids = k, distance = d_total[k]))
 }
+distances$distance_m<-distances$distance*0.052
 
 max(distances$distance)
+```
+
+Plot of distances:
+```{r}
+ggplot(data=distances, aes(x=distance_m))+
+  geom_histogram()
 ```
 
 Combining time and distance:
@@ -166,10 +179,22 @@ Combining time and distance:
 realdistance<-subset(distances,distances$distance>0)
 time_distance<-merge(realdistance,realjourneys,by.x = "ids",by.y = "irlynx_id")
 write.csv(time_distance,"BH_time_distance.csv")
-ggplot(data = time_distance, aes(x=journeytime_min,y=distance))+
-  geom_point()+
-  xlim(0,5)+
-  ylim(0,250)
+time_distance$speed<-time_distance$distance_m/time_distance$journeytime
+ggplot(data = time_distance, aes(x=speed))+
+  geom_histogram(binwidth = 0.01)+
+  xlim(0.8,1.5)
+```
+
+Journey info:
+```{r}
+goodtraces<-subset(time_distance, time_distance$speed<1.5)
+goodtraces<-subset(time_distance, time_distance$speed>0.8)
+summary(goodtraces$journeytime)
+summary(goodtraces$distance_m)
+summary(goodtraces$speed)
+max(timeinfo$n)
+sum(time_distance$journeytime_min)/max(timeinfo$n)
+max(timeinfo$n)
 ```
 
 
