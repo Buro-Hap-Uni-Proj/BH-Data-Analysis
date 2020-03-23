@@ -3,24 +3,21 @@ title: "BH Analysis"
 author: "Marc"
 date: "28/02/2020"
 output:
-  html_document: default
+  word_document: default
   pdf_document: default
+  html_document: default
 ---
 
 FILTERED BY 18/12/19
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## R Markdown
+### Importing and formatting data
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
-
-Required Libraries:
-```{r}
+*Required Libraries:*
+```{r message=FALSE}
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -33,7 +30,7 @@ library(sp)
 library(rgeos)
 ```
 
-Getting File:
+*Getting File:*
 ```{r}
 #Depending on Computer:
 setwd('/users/marckennedy/desktop')
@@ -42,26 +39,26 @@ getwd()
 BHData<-read.csv(file='BHDATA.csv')
 ```
 
-Filtering Data to remove duplicates:
+*Filtering Data to remove duplicates:*
 ```{r}
 BH<-unique(BHData[ , 2:6])
 ```
 
-Separating Position:
+*Separating Position:*
 ```{r}
 BH<- data.frame(separate(BH,position, c("X", "Y"),","))
 BH$X2<-as.numeric(gsub("\\[","",BH$X))
 BH$Y2<-as.numeric(gsub("\\]","",BH$Y))
 ```
 
-Converting Time:
+*Converting Time:*
 ```{r}
 BH$datetime<-as.POSIXct((BH$time)/1000, origin="1970-01-01")
 BH$date<- as.IDate(BH$datetime)
 BH$time_of_day<-as.ITime(BH$datetime)
 ```
 
-Tidying Up Data:
+*Tidying Up Data:*
 ```{r}
 BH$uuid<-NULL
 BH$direction<-NULL
@@ -71,50 +68,62 @@ BH$X2<- NULL
 BH$Y2<- NULL
 ```
 
-Filtering for one day:
+*Filtering for one day:*
 ```{r}
 TESTDATA<-subset(BH,date=="2019-12-18")
 TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & datetime<=as.POSIXct("2019-12-18 17:00:00"))
 ```
 
-Importing Background:
+*Importing Background:*
 ```{r}
+setwd('/users/marckennedy/desktop')
 packs <- c("png","grid")
 lapply(packs, require, character.only = TRUE) 
 img <- readPNG("Layout.png") 
 g <- rasterGrob(img, interpolate=TRUE) 
-subset(TESTDATA, X=56)
+```
+ ![](/users/marckennedy/desktop/Layout.png) 
+```{r}
+knitr::knit_exit()
 ```
 
-Plot of positions:
+### Position graphs
+
+*Plot of positions:*
 ```{r}
 ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
   scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
   scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
-  xlab("xpos")+
-  ylab("ypos")+
+  xlab("x position")+
+  ylab("y position")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   #geom_path(size=0.1)+
   geom_point(size=0.1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ggtitle("Plot of Heat Source Positions")
 ```
 
-Plot of id paths:
+*Plot of id paths:*
 ```{r}
 ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
   scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
   scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
-  xlab("xpos")+
-  ylab("ypos")+
+  xlab("x position")+
+  ylab("y position")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   #geom_path(size=0.1)+
   geom_path(size=0.1)+
   theme(legend.position = "none")
 ```
 
-Number of employees per timestamp:
+
+
+### Number of employees
+
+*Number of employees per timestamp:*
 ```{r}
 times<-group_by(TESTDATA,time)
 timeinfo<-summarise(times,
@@ -127,7 +136,7 @@ timeinfo$timeofday<-(timeinfo$time-timeinfo$date*1000)
 summary(timeinfo$n)
 ```
 
-Plot of employees per timestamp:
+*Plot of employees per timestamp:*
 ```{r}
 ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
   geom_point(size=0.2)+
@@ -136,7 +145,10 @@ ggplot(data=timeinfo,aes(x=(Ntod/3600),y=n))+
   ylab("Number of Heat Sources")
 ```
 
-Journey Duration:
+
+### Journey statistics
+
+*Journey Duration:*
 ```{r}
 maxtime<-data.frame(tapply(TESTDATA$datetime,TESTDATA$irlynx_id,max))
 mintime<-data.frame(tapply(TESTDATA$datetime,TESTDATA$irlynx_id,min))
@@ -155,8 +167,7 @@ journeys$journeytime_h<-(journeys$journeytime/3600)
 realjourneys<-subset(journeys,journeytime>0)
 ```
 
-
-Distance Travelled By ID:
+*Distance Travelled By ID:*
 ```{r}
 ID_Count <- group_by(TESTDATA, irlynx_id)
 Counts <- summarise(ID_Count , n=n())
@@ -181,42 +192,42 @@ for (k in list_ids) {
 realdistance<-subset(distances,distances$distance>0)
 ```
 
-Converting to "m", from analysis of layout: **1 UNIT = 0.052 m** 
+*Converting to "m", from analysis of layout:* **1 UNIT = 0.052 m** 
 ```{r}
 realdistance$distance_m<-realdistance$distance*0.052
 ```
 
-Combining time and distance:
+*Combining time and distance:*
 ```{r}
 time_distance<-merge(realdistance,realjourneys,by.x = "ids",by.y = "irlynx_id")
 write.csv(time_distance,"BH_time_distance.csv")
 time_distance$speed<-time_distance$distance_m/time_distance$journeytime
 ```
 
-Filtering for "real journeys" by duration:
+*Filtering for "real journeys" by duration:*
 ```{r}
 JOURNEYS_TDS<-subset(time_distance,journeytime>5)
 ```
 
-Filtering for "real journeys" by distance:
+*Filtering for "real journeys" by distance:*
 ```{r}
 JOURNEYS_TDS<-subset(JOURNEYS_TDS,distance_m>5)
 ```
 
-Filtering for feasible speeds:
+*Filtering for feasible speeds:*
 ```{r}
 JOURNEYS_TDS<-subset(JOURNEYS_TDS,JOURNEYS_TDS$speed>0.58)
 JOURNEYS_TDS<-subset(JOURNEYS_TDS,JOURNEYS_TDS$speed<2.3)
 ```
 
-Summary of unfiltered journeys:
+*Summary of unfiltered journeys:*
 ```{r}
 summary(time_distance$distance_m)
 summary(time_distance$journeytime_min)
 summary(time_distance$speed)
 ```
 
-By comparison, summary of filtered journeys:
+*By comparison, summary of filtered journeys:*
 ```{r}
 summary(JOURNEYS_TDS$distance_m)
 summary(JOURNEYS_TDS$journeytime_min)
@@ -224,47 +235,55 @@ summary(JOURNEYS_TDS$speed)
 ```
 
 
-Histogram of durations:
+### Journey graphs
+
+*Histogram of durations:*
 ```{r}
 ggplot(data = JOURNEYS_TDS, aes(x=journeytime_min))+
   geom_histogram()
 ```
 
-Histogram of distances:
+*Histogram of distances:*
 ```{r}
 ggplot(data = JOURNEYS_TDS, aes(x=distance_m))+
   geom_histogram()
 ```
 
-Histogram of speeds:
+*Histogram of speeds:*
 ```{r}
 ggplot(data = JOURNEYS_TDS, aes(x=speed))+
   geom_histogram(binwidth = 0.01)+
   xlim(0.8,1.5)
 ```
 
-Average distance travelled:
+*Average time spent travelling:*
 ```{r}
-max(timeinfo$n)
-sum(time_distance$distance_m)
-sum(time_distance$distance_m)/max(timeinfo$n)
-sum(JOURNEYS_TDS$distance_m)
+Number_Employees<-mean(timeinfo$n)
+Total_Time<-sum(JOURNEYS_TDS$journeytime)
+Average_Daily_Journey_Time <- Total_Time/Number_Employees
+Average_Daily_Journey_Time
 ```
 
-Average time spent travelling:
+*Average distance travelled:*
 ```{r}
-max(timeinfo$n)
-time<-sum(JOURNEYS_TDS$journeytime_min)
-time/median(timeinfo$n)
-sum(JOURNEYS_TDS$distance_m)
+Total_Distance<-sum(JOURNEYS_TDS$distance_m)
+Average_Daily_Journey_Distance <- Total_Distance/Number_Employees
+Average_Daily_Journey_Distance
 ```
 
-Combining filtered and positional data:
+*Average speed:*
 ```{r}
-FILTERED_DATA<-merge(TESTDATA,JOURNEYS_TDS,by.x = "irlynx_id",by.y = "ids") FILTERED_DATA<-FILTERED_DATA[order(FILTERED_DATA$time),]
+Average_Speed<-Average_Daily_Journey_Distance/Average_Daily_Journey_Time
+Average_Speed
 ```
 
-Plot of filtered id paths:
+*Combining filtered and positional data:*
+```{r}
+FILTERED_DATA<-merge(TESTDATA,JOURNEYS_TDS,by.x = "irlynx_id",by.y = "ids")
+FILTERED_DATA<-FILTERED_DATA[order(FILTERED_DATA$time),]
+```
+
+*Plot of filtered id paths:*
 ```{r}
 ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
@@ -276,3 +295,4 @@ ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   geom_path(size=0.2)+
   theme(legend.position = "none")
 ```
+
