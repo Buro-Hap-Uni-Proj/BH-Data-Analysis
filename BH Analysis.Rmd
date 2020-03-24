@@ -214,3 +214,81 @@ newdata <- cbind(ntest, ntest[min.d,], apply(d, 1, function(x) sort(x, decreasin
 colnames(newdata) <- c(colnames(ntest),'neighbor irlynx_id','n.time','n.X','n.Y', '','','', 'distance')
 ```
 
+
+
+Getting Interactions - Marc will tidy up
+```{r}
+
+Small_Data <- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 9:00:00") & datetime<=as.POSIXct("2019-12-18 9:05:00"))
+interactions <- data_frame(person_id = character() ,interacting_ids = character(), time = numeric(), distance = numeric(), avgerage_x = numeric(), average_y = numeric())
+
+
+ids <- Small_Data$irlynx_id
+ids <- unique(ids)
+
+
+for (j in ids) {
+  singleID <- filter(Small_Data, Small_Data$irlynx_id == j)
+  times <- as.numeric(singleID$time)
+  
+  for (t in times) {
+    people_in_time <- filter(Small_Data, time == t & irlynx_id != j)
+    people_ids <- as.character(people_in_time$irlynx_id)
+    my_loc <- filter(singleID, time == t)
+    x <- my_loc$X
+    y <- my_loc$Y
+    
+      for (i in people_ids) {
+        relevant_line <- filter(people_in_time, irlynx_id == i)
+        xp <- relevant_line$X
+        yp <- relevant_line$Y
+        avg_x <- (x+xp)/2
+        avg_y <- (y+yp)/2
+        d <- sqrt(((x-xp)*(x-xp))+((y-yp)*(y-yp)))
+        
+          if (d <= 20) {
+            interactions <- rbind(interactions, data.frame(person_id = j ,interacting_ids = i , time = t, distance = d, avgerage_x = avg_x, average_y = avg_y))  
+          }
+      }
+  }
+}  
+
+
+
+interactions <- interactions[order(interactions$person_id,interactions$interacting_ids),]
+interactions$number <- seq.int(nrow(interactions))
+
+
+n_max <- nrow(interactions)
+n_max  <- n_max - 1
+
+ints_2  <- data_frame(number = numeric(), interaction_number = numeric())
+ints_2 <- rbind(ints_2, data_frame(number= 1 , interaction_number = 1 ))
+
+m <- 1
+
+for (n in 2:n_max){
+  row_nminus1 <- filter(interactions, number == (n-1))  
+  row_n <- filter(interactions, number == n)
+  t1 <- row_nminus1$time 
+  t2 <- row_n$time
+  t <- t2 - t1
+  if ( row_n$person_id == row_nminus1$person_id & row_n$interacting_ids == row_nminus1$interacting_ids & t <= 600) {     #code checks versus previous row if the ids match and if the interactions are within a certain time
+    m <- m
+  } else {
+    m <- m + 1
+  }
+  ints_2 <- rbind(ints_2, data_frame(number=n , interaction_number = m ))
+}
+
+total <- merge(interactions,ints_2,by="number")
+
+total_2 <-total%>%
+  group_by(interaction_number, person_id, interacting_ids)%>%
+  summarise(x_avg = mean(avgerage_x),
+            y_avg = mean(average_y),
+            average_distance = mean(distance),
+            duration = ( max(time) - min(time)),
+            start_time = min(time))
+```
+
