@@ -285,7 +285,7 @@ FILTERED_DATA<-FILTERED_DATA[order(FILTERED_DATA$time),]
 ```{r 29}
 ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
+  scale_x_continuous(limits = c(-560,110),breaks = seq(-560,110,50))+
   scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
   xlab("xpos")+
   ylab("ypos")+
@@ -293,7 +293,6 @@ ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   geom_path(size=0.2)+
   theme(legend.position = "none")
 ```
-
 
 
 ### Counting Interactions
@@ -312,10 +311,9 @@ ids <- Small_Data$irlynx_id
 ids <- unique(ids)
 ```
 
-
 *Identifying neighbouring IDs:*
 ```{r}
-D<-19.2 #distance required for interaction =  1m
+D<-48.1 #distance required for interaction =  1m
 
 for (j in ids) {
   singleID <- filter(Small_Data, Small_Data$irlynx_id == j) #filtering for a single ID
@@ -342,10 +340,14 @@ for (j in ids) {
       }
   }
 }  
+
+write.csv(interactions,"BH_interactions.csv")
 ```
 
 *Identifying interactions:*
 ```{r}
+T<-10000
+
 interactions <- interactions[order(interactions$person_id,interactions$interacting_ids),]
 interactions$number <- seq.int(nrow(interactions)) #assigning number by row
 
@@ -364,7 +366,7 @@ for (n in 2:n_max){
   t1 <- row_nminus1$time 
   t2 <- row_n$time
   t <- t2 - t1
-  if ( row_n$person_id == row_nminus1$person_id & row_n$interacting_ids == row_nminus1$interacting_ids & t <= 600) {     #code checks versus previous row if the ids match and if the interactions are within a certain time
+  if ( row_n$person_id == row_nminus1$person_id & row_n$interacting_ids == row_nminus1$interacting_ids & t <= T) {     #code checks versus previous row if the ids match and if the interactions are within a certain time
     m <- m
   } else {
     m <- m + 1
@@ -375,7 +377,6 @@ for (n in 2:n_max){
 total <- merge(interactions,ints_2,by="number")
 ```
 
-
 *Final data frame:*
 ```{r}
 total_2 <-total%>%
@@ -385,5 +386,18 @@ total_2 <-total%>%
             average_distance = mean(distance),
             duration = ( max(time) - min(time)),
             start_time = min(time))
+```
+
+*Plotting interactions:*
+```{r}
+ggplot(data = subset(total_2,duration!=0),aes(x= -y_avg,y=-x_avg,color=start_time))+
+  scale_color_gradientn(colours = rainbow(10))+
+  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
+  scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
+  xlab("x position")+
+  ylab("y position")+
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  geom_point(aes(size = duration))+
+  theme(legend.position = "none")
 ```
 
