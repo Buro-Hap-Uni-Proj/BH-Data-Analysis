@@ -200,18 +200,22 @@ time_distance$speed<-time_distance$distance_m/time_distance$journeytime
 
 *Filtering for "real journeys" by duration:*
 ```{r 17}
-JOURNEYS_TDS<-subset(time_distance,journeytime>5)
+Tmin<-5
+JOURNEYS_TDS<-subset(time_distance,journeytime>JT)
 ```
 
 *Filtering for "real journeys" by distance:*
 ```{r 18}
+Dmin<-19.2
 JOURNEYS_TDS<-subset(JOURNEYS_TDS,distance_m>5)
 ```
 
 *Filtering for feasible speeds:*
 ```{r 19}
-JOURNEYS_TDS<-subset(JOURNEYS_TDS,JOURNEYS_TDS$speed>0.58)
-JOURNEYS_TDS<-subset(JOURNEYS_TDS,JOURNEYS_TDS$speed<2.3)
+Vmin<-0.58
+Vmax<-2.3
+JOURNEYS_TDS<-subset(JOURNEYS_TDS,JOURNEYS_TDS$speed>Vmin)
+JOURNEYS_TDS<-subset(JOURNEYS_TDS,JOURNEYS_TDS$speed<Vmax)
 ```
 
 *Summary of unfiltered journeys:*
@@ -292,54 +296,65 @@ ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
 
 
 
-*Getting Interactions - Marc will tidy up*
-```{r}
+### Counting Interactions
 
+*Filtering data to specific time frame:*
+```{r}
 Small_Data <- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 9:00:00") & datetime<=as.POSIXct("2019-12-18 9:05:00"))
+```
+
+*Initialising data frames and vectors:*
+```{r}
 interactions <- data_frame(person_id = character() ,interacting_ids = character(), time = numeric(), distance = numeric(), avgerage_x = numeric(), average_y = numeric())
 
 
 ids <- Small_Data$irlynx_id
 ids <- unique(ids)
+```
 
+
+*Identifying neighbouring IDs:*
+```{r}
+D<-19.2 #distance required for interaction =  1m
 
 for (j in ids) {
-  singleID <- filter(Small_Data, Small_Data$irlynx_id == j)
-  times <- as.numeric(singleID$time)
+  singleID <- filter(Small_Data, Small_Data$irlynx_id == j) #filtering for a single ID
+  times <- as.numeric(singleID$time) #setting time as single ID time
   
   for (t in times) {
-    people_in_time <- filter(Small_Data, time == t & irlynx_id != j)
-    people_ids <- as.character(people_in_time$irlynx_id)
-    my_loc <- filter(singleID, time == t)
+    people_in_time <- filter(Small_Data, time == t & irlynx_id != j) #filtering for all IDs excluding selected ID
+    people_ids <- as.character(people_in_time$irlynx_id) 
+    my_loc <- filter(singleID, time == t) #location of selected ID at specific time
     x <- my_loc$X
     y <- my_loc$Y
     
       for (i in people_ids) {
-        relevant_line <- filter(people_in_time, irlynx_id == i)
+        relevant_line <- filter(people_in_time, irlynx_id == i) #filtering for a specific other ID
         xp <- relevant_line$X
         yp <- relevant_line$Y
         avg_x <- (x+xp)/2
         avg_y <- (y+yp)/2
-        d <- sqrt(((x-xp)*(x-xp))+((y-yp)*(y-yp)))
+        d <- sqrt(((x-xp)*(x-xp))+((y-yp)*(y-yp))) #distance between IDs
         
-          if (d <= 20) {
-            interactions <- rbind(interactions, data.frame(person_id = j ,interacting_ids = i , time = t, distance = d, avgerage_x = avg_x, average_y = avg_y))  
+          if (d <= D) {
+            interactions <- rbind(interactions, data.frame(person_id = j ,interacting_ids = i , time = t, distance = d, avgerage_x = avg_x, average_y = avg_y))  #if within 1m 
           }
       }
   }
 }  
+```
 
-
-
+*Identifying interactions:*
+```{r}
 interactions <- interactions[order(interactions$person_id,interactions$interacting_ids),]
-interactions$number <- seq.int(nrow(interactions))
+interactions$number <- seq.int(nrow(interactions)) #assigning number by row
 
 
 n_max <- nrow(interactions)
 n_max  <- n_max - 1
 
 ints_2  <- data_frame(number = numeric(), interaction_number = numeric())
-ints_2 <- rbind(ints_2, data_frame(number= 1 , interaction_number = 1 ))
+ints_2 <- rbind(ints_2, data_frame(number= 1 , interaction_number = 1 )) #data frame to store row number and corresponding interaction number
 
 m <- 1
 
@@ -354,11 +369,15 @@ for (n in 2:n_max){
   } else {
     m <- m + 1
   }
-  ints_2 <- rbind(ints_2, data_frame(number=n , interaction_number = m ))
+  ints_2 <- rbind(ints_2, data_frame(number=n , interaction_number = m )) #assigns interaction number
 }
 
 total <- merge(interactions,ints_2,by="number")
+```
 
+
+*Final data frame:*
+```{r}
 total_2 <-total%>%
   group_by(interaction_number, person_id, interacting_ids)%>%
   summarise(x_avg = mean(avgerage_x),
