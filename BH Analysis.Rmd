@@ -195,19 +195,20 @@ realdistance$distance_m<-realdistance$distance*0.052
 ```{r 16}
 time_distance<-merge(realdistance,realjourneys,by.x = "ids",by.y = "irlynx_id")
 write.csv(time_distance,"BH_time_distance.csv")
+time_distance<-read.csv("BH_time_distance.csv")
 time_distance$speed<-time_distance$distance_m/time_distance$journeytime
 ```
 
 *Filtering for "real journeys" by duration:*
 ```{r 17}
-Tmin<-5
-JOURNEYS_TDS<-subset(time_distance,journeytime>JT)
+Tmin<-3
+JOURNEYS_TDS<-subset(time_distance,journeytime>Tmin)
 ```
 
 *Filtering for "real journeys" by distance:*
 ```{r 18}
 Dmin<-19.2
-JOURNEYS_TDS<-subset(JOURNEYS_TDS,distance_m>5)
+JOURNEYS_TDS<-subset(JOURNEYS_TDS,distance_m>Dmin)
 ```
 
 *Filtering for feasible speeds:*
@@ -299,7 +300,7 @@ ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
 
 *Filtering data to specific time frame:*
 ```{r}
-rndtime<-runif(1,as.numeric(as.POSIXct("2019-12-18 13:00:00")),as.numeric(as.POSIXct("2019-12-18 14:00:00")))
+rndtime<-runif(1,as.numeric(as.POSIXct("2019-12-18 13:00:00")),as.numeric(as.POSIXct("2019-12-18 13:55:00")))
 Small_Data <- subset(TESTDATA, datetime>=as.POSIXct(rndtime, origin="1970-01-01") & datetime<=as.POSIXct(rndtime+300, origin="1970-01-01"))
 ```
 
@@ -390,10 +391,18 @@ total_2 <-total%>%
             start_time = min(time))
 ```
 
+*Inserting location:*
+```{r}
+total_2$location[total_2$x_avg<300 & total_2$x_avg>110 & total_2$y_avg>375 & total_2$y_avg<495]<-"Meeting Room"
+total_2$location[(total_2$x_avg<550 & total_2$x_avg>450 & total_2$y_avg>0 & total_2$y_avg<495) | (total_2$x_avg<370 & total_2$x_avg>310 & total_2$y_avg>0 & total_2$y_avg<70) | (total_2$x_avg<450 & total_2$x_avg>370 & total_2$y_avg>10 & total_2$y_avg<115)]<-"Desks"
+total_2$location[total_2$x_avg<200 & total_2$x_avg>0 & total_2$y_avg>150 & total_2$y_avg<360]<-"Kitchen"
+```
+
+
 *Plotting interactions:*
 ```{r}
-ggplot(data = subset(total_2,duration!=0),aes(x= -y_avg,y=-x_avg,color=start_time))+
-  scale_color_gradientn(colours = rainbow(10))+
+ggplot(data = subset(total_2,duration!=0),aes(x= -y_avg,y=-x_avg,color=location))+
+  #scale_color_gradientn(colours = rainbow(10))+
   scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
   scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
   xlab("x position")+
@@ -401,5 +410,18 @@ ggplot(data = subset(total_2,duration!=0),aes(x= -y_avg,y=-x_avg,color=start_tim
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_point(aes(size = duration))+
   theme(legend.position = "none")
+```
+
+*Layout:*
+```{r}
+ggplot(data = subset(total_2,duration!=0),aes(x= -y_avg,y=-x_avg,color=start_time))+
+  scale_color_gradientn(colours = rainbow(10))+
+  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,20))+
+  scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,20))+
+  xlab("x position")+
+  ylab("y position")+
+  annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
+  theme(legend.position = "none")
+```
 ```
 
