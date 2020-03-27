@@ -69,8 +69,8 @@ BH$Y2<- NULL
 
 *Filtering for one day:*
 ```{r 7}
-TESTDATA<-subset(BH,date=="2019-12-18")
-TESTDATA<- subset(TESTDATA, datetime>=as.POSIXct("2019-12-18 09:00:00") & datetime<=as.POSIXct("2019-12-18 17:00:00"))
+TESTDATA<-subset(BH,(date>=as.IDate("2019-12-18") & date<=as.IDate("2019-12-20")) | (date==as.IDate("2020-01-02")))
+TESTDATA<- subset(TESTDATA, time_of_day>=as.ITime("09:00:00") & time_of_day<=as.ITime("17:00:00"))
 ```
 
 *Importing Background:*
