@@ -69,8 +69,18 @@ BH$Y2<- NULL
 
 *Filtering for one day:*
 ```{r 7}
-TESTDATA<-subset(BH,(date>=as.IDate("2019-12-18") & date<=as.IDate("2019-12-20")) | (date==as.IDate("2020-01-02")))
+TESTDATA<-subset(BH,(date==as.IDate("2019-12-18")))
 TESTDATA<- subset(TESTDATA, time_of_day>=as.ITime("09:00:00") & time_of_day<=as.ITime("17:00:00"))
+```
+
+*Inserting location:*
+```{r}
+TESTDATA$location[TESTDATA$X<300 & TESTDATA$X>110 & TESTDATA$Y>340 & TESTDATA$Y<495]<-"Meeting Room"
+TESTDATA$location[(TESTDATA$X<550 & TESTDATA$X>450 & TESTDATA$Y>0 & TESTDATA$Y<495) | (TESTDATA$X<370 & TESTDATA$X>310 & TESTDATA$Y>0 & TESTDATA$Y<70) | (TESTDATA$X<450 & TESTDATA$X>370 & TESTDATA$Y>10 & TESTDATA$Y<115)]<-"Desks"
+TESTDATA$location[TESTDATA$X<200 & TESTDATA$X>0 & TESTDATA$Y>150 & TESTDATA$Y<270]<-"Kitchen"
+TESTDATA$location[(TESTDATA$X<415 & TESTDATA$X>365 & TESTDATA$Y>365 & TESTDATA$Y<440) | (TESTDATA$X<425 & TESTDATA$X>330 & TESTDATA$Y>220 & TESTDATA$Y<330)]<-"Collaborative Work"
+TESTDATA$location[is.na(TESTDATA$location)]<-"Corridor"
+TESTDATA$location<-as.factor(TESTDATA$location)
 ```
 
 *Importing Background:*
@@ -91,28 +101,32 @@ knitr::knit_exit()
 
 *Plot of positions:*
 ```{r 9}
-ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
-  scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
+ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=location,group=irlynx_id))+
+  #scale_color_gradientn(colours = rainbow(10))+
+  scale_x_continuous(limits = c(-520,110),breaks = seq(-520,110,50))+
   scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
   xlab("x position")+
   ylab("y position")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_point(size=0.1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  ggtitle("Plot of heat source postion with layout") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 *Plot of id paths:*
 ```{r 10}
 ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
+  scale_x_continuous(limits = c(-520,110),breaks = seq(-520,110,50))+
   scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
   xlab("x position")+
   ylab("y position")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_path(size=0.1)+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  ggtitle("Plot of heat source paths with layout") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ### Number of employees
@@ -121,7 +135,8 @@ ggplot(data = TESTDATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
 ```{r 11}
 times<-group_by(TESTDATA,time)
 timeinfo<-summarise(times,
-                    n=n())
+                    n=n(),
+                    n_kitchen=sum(location == "Kitchen"]))
 timeinfo$Ntime<-as.POSIXct((timeinfo$time)/1000, origin="1970-01-01")
 timeinfo$Ntod <- as.ITime(timeinfo$Ntime)
 timeinfo$Ndate <- as.IDate(timeinfo$Ntime)
@@ -300,8 +315,8 @@ ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
 
 *Filtering data to specific time frame:*
 ```{r}
-rndtime<-runif(1,as.numeric(as.POSIXct("2019-12-18 16:00:00")),as.numeric(as.POSIXct("2019-12-18 16:55:00")))
-Small_Data <- subset(TESTDATA, datetime>=as.POSIXct(rndtime, origin="1970-01-01") & datetime<=as.POSIXct(rndtime+300, origin="1970-01-01"))
+rndtime<-runif(1,as.numeric(as.POSIXct("2019-12-18 09:00:00")),as.numeric(as.POSIXct("2019-12-18 16:00:00")))
+Small_Data <- subset(TESTDATA, datetime>=as.POSIXct(rndtime, origin="1970-01-01") & datetime<=as.POSIXct(rndtime+3600, origin="1970-01-01"))
 ```
 
 *Initialising data frames and vectors:*
@@ -343,7 +358,7 @@ for (j in ids) {
   }
 }  
 
-#write.csv(interactions,"BH_interactions(16-17).csv")
+write.csv(interactions,"BH_interactions(1h, 1517-1617).csv")
 
 ```
 
@@ -395,22 +410,25 @@ total_2 <-total%>%
 
 *Inserting location:*
 ```{r}
-total_2$location[total_2$x_avg<300 & total_2$x_avg>110 & total_2$y_avg>375 & total_2$y_avg<495]<-"Meeting Room"
+total_2$location[total_2$x_avg<300 & total_2$x_avg>110 & total_2$y_avg>340 & total_2$y_avg<495]<-"Meeting Room"
 total_2$location[(total_2$x_avg<550 & total_2$x_avg>450 & total_2$y_avg>0 & total_2$y_avg<495) | (total_2$x_avg<370 & total_2$x_avg>310 & total_2$y_avg>0 & total_2$y_avg<70) | (total_2$x_avg<450 & total_2$x_avg>370 & total_2$y_avg>10 & total_2$y_avg<115)]<-"Desks"
 total_2$location[total_2$x_avg<200 & total_2$x_avg>0 & total_2$y_avg>150 & total_2$y_avg<310]<-"Kitchen"
+total_2$location[(total_2$x_avg<415 & total_2$x_avg>365 & total_2$y_avg>365 & total_2$y_avg<440) | (total_2$x_avg<425 & total_2$x_avg>330 & total_2$y_avg>220 & total_2$y_avg<330)]<-"Collaborative Work"
 ```
 
 *Plotting interactions:*
 ```{r}
 ggplot(data = subset(total_2,duration!=0),aes(x= -y_avg,y=-x_avg,color=location))+
   #scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-555,110),breaks = seq(-555,110,50))+
-  scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
+  scale_x_continuous(limits = c(-520,110),breaks = seq(-520,110,10))+
+  scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,10))+
   xlab("x position")+
   ylab("y position")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf) +
   geom_point(aes(size = duration))+
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  ggtitle("Plot of interactions based on location") +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 *Layout:*
