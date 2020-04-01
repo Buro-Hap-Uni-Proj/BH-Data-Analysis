@@ -19,7 +19,6 @@ knitr::opts_chunk$set(echo = FALSE,error = FALSE)
 *Required Libraries:*
 ```{r 1,message=FALSE}
 library(ggplot2)
-library(dplyr)
 library(tidyr)
 library(data.table)
 library(lubridate)
@@ -29,7 +28,8 @@ options(scipen = 999)
 library(sp)
 library(rgeos)
 library(gridExtra)
-library(plyr)
+library(dplyr)
+library(janitor)
 ```
 
 *Getting File:*
@@ -186,7 +186,6 @@ journeys$min<-journeys$tapply.TESTDATA.datetime..TESTDATA.irlynx_id..min.
 journeys$tapply.TESTDATA.datetime..TESTDATA.irlynx_id..min.<-NULL
 journeys$journeytime<-(journeys$max-journeys$min)
 journeys<-subset(journeys,!is.na(journeytime))
-sum(journeys$journeytime)/3600
 journeys$journeytime_min<-(journeys$journeytime/60)
 journeys$journeytime_h<-(journeys$journeytime/3600)
 realjourneys<-subset(journeys,journeytime>0)
@@ -226,7 +225,8 @@ realdistance$distance_m<-realdistance$distance*0.052
 ```{r 16}
 time_distance<-merge(realdistance,realjourneys,by.x = "ids",by.y = "irlynx_id")
 write.csv(time_distance,"BH_time_distance.csv")
-time_distance<-read.csv("BH_time_distance.csv")
+# time_distance<-read.csv("BH_time_distance.csv")
+# time_distance$X<-NULL
 time_distance$speed<-time_distance$distance_m/time_distance$journeytime
 ```
 
@@ -313,7 +313,6 @@ Average_Daily_Journey_Time
 Total_Distance<-sum(JOURNEYS_TDS$distance_m)
 Average_Daily_Journey_Distance <- Total_Distance/Number_Employees
 Average_Daily_Journey_Distance
-print(sprintf("The average daily journey distance for this particular day is  %4.0f m per employee\n", Average_Daily_Journey_Distance))
 ```
 
 *Average speed:*
@@ -332,16 +331,14 @@ FILTERED_DATA<-FILTERED_DATA[order(FILTERED_DATA$time),]
 ```{r 29}
 ggplot(data = FILTERED_DATA,aes(x= -Y,y=-X,color=time,group=irlynx_id))+
   scale_color_gradientn(colours = rainbow(10))+
-  scale_x_continuous(limits = c(-560,110),breaks = seq(-560,110,50))+
-  scale_y_continuous(limits = c(-550,-60),breaks = seq(-550,-60,50))+
+  scale_x_continuous(limits = c(-520,110),breaks = seq(-500,100,20))+
+  scale_y_continuous(limits = c(-550,-60),breaks = seq(-600,0,20))+
   xlab("xpos")+
   ylab("ypos")+
   annotation_custom(g, xmin=-Inf, xmax=Inf, ymin=-Inf, ymax=Inf)+
   geom_path(size=0.2)+
   theme(legend.position = "none")
 ```
-
-
 
 ### Counting Interactions
 
@@ -444,12 +441,13 @@ total_2<-read.csv(file="BH interaction data.csv")
 
 *Inserting location:*
 ```{r}
-total_2$location[total_2$x_avg<300 & total_2$x_avg>110 & total_2$y_avg>340 & total_2$y_avg<495]<-"Meeting Room"
-total_2$location[(total_2$x_avg<550 & total_2$x_avg>450 & total_2$y_avg>0 & total_2$y_avg<495) | (total_2$x_avg<370 & total_2$x_avg>310 & total_2$y_avg>0 & total_2$y_avg<70) | (total_2$x_avg<451 & total_2$x_avg>369 & total_2$y_avg>10 & total_2$y_avg<115)]<-"Desks"
-total_2$location[(total_2$x_avg<200 & total_2$x_avg>0 & total_2$y_avg>150 & total_2$y_avg<270) | (total_2$x_avg<205 & total_2$x_avg>65 & total_2$y_avg>269 & total_2$y_avg<305)]<-"Kitchen"
-total_2$location[((total_2$x_avg<415 & total_2$x_avg>389 & total_2$y_avg>375 & total_2$y_avg<440) | (total_2$x_avg<390 & total_2$x_avg>365 & total_2$y_avg>365 & total_2$y_avg<440)) | ((total_2$x_avg<420 & total_2$x_avg>374 & total_2$y_avg>195 & total_2$y_avg<330) | (total_2$x_avg<375 & total_2$x_avg>330 & total_2$y_avg>165 & total_2$y_avg<300))]<-"Collaborative Work"
-total_2$location[(total_2$x_avg<425 & total_2$x_avg>394 & total_2$y_avg>140 & total_2$y_avg<195) | (total_2$x_avg<395 & total_2$x_avg>354 & total_2$y_avg>130 & total_2$y_avg<160) | (total_2$x_avg<355 & total_2$x_avg>325 & total_2$y_avg>95 & total_2$y_avg<150)]<-"Quiet Work"
-total_2$location[is.na(total_2$location)]<-"Corridor"
+total_2$Location[total_2$x_avg<300 & total_2$x_avg>110 & total_2$y_avg>340 & total_2$y_avg<495]<-"Meeting Room"
+total_2$Location[(total_2$x_avg<550 & total_2$x_avg>450 & total_2$y_avg>0 & total_2$y_avg<495) | (total_2$x_avg<370 & total_2$x_avg>310 & total_2$y_avg>0 & total_2$y_avg<70) | (total_2$x_avg<451 & total_2$x_avg>369 & total_2$y_avg>10 & total_2$y_avg<115)]<-"Desks"
+total_2$Location[(total_2$x_avg<200 & total_2$x_avg>0 & total_2$y_avg>150 & total_2$y_avg<270) | (total_2$x_avg<205 & total_2$x_avg>65 & total_2$y_avg>269 & total_2$y_avg<305)]<-"Kitchen"
+total_2$Location[((total_2$x_avg<415 & total_2$x_avg>389 & total_2$y_avg>375 & total_2$y_avg<440) | (total_2$x_avg<390 & total_2$x_avg>365 & total_2$y_avg>365 & total_2$y_avg<440)) | ((total_2$x_avg<420 & total_2$x_avg>374 & total_2$y_avg>195 & total_2$y_avg<330) | (total_2$x_avg<375 & total_2$x_avg>330 & total_2$y_avg>165 & total_2$y_avg<300))]<-"Collaborative Work"
+total_2$Location[(total_2$x_avg<425 & total_2$x_avg>394 & total_2$y_avg>140 & total_2$y_avg<195) | (total_2$x_avg<395 & total_2$x_avg>354 & total_2$y_avg>130 & total_2$y_avg<160) | (total_2$x_avg<355 & total_2$x_avg>325 & total_2$y_avg>95 & total_2$y_avg<150)]<-"Quiet Work"
+total_2$Location[is.na(total_2$Location)]<-"Corridor"
+total_2$Location<-as.character(total_2$Location)
 ```
 
 *Plotting interactions:*
@@ -481,18 +479,62 @@ de<-(-0.5)
 
 *Interaction Efficiency:*
 ```{r}
-sum(total_2$duration,total_2$location =="Kitchen" )
-IE<-data.frame("Location" = c("Kitchen","Corridor","Meeting Room","Collaborative Work","Quiet Work","Desks"), "Number_of_Interactions" = c(sum(total_2$location == "Kitchen"),sum(total_2$location == "Corridor"),sum(total_2$location == "Meeting Room"),sum(total_2$location == "Collaborative Work"),sum(total_2$location == "Quiet Work"),sum(total_2$location == "Desks")), "Weighting_Factor" = c(ki,co,mr,cw,qw,de))
-IE$Interaction_Impact<-IE$Number_of_Interactions*IE$Weighting_Factor
-Interaction_Impact<-sum(IE$Interaction_Impact)
-pdf("II.pdf", height=11, width=8.5)
+IE1<-aggregate(. ~ Location, data=total_2, sum)
+IE1<-subset(IE1,select = c(Location, duration))
+IE1$Total_Duration_seconds<-IE1$duration/1000
+IE1$duration<-NULL
+IE1 <- IE1 %>% 
+  mutate_if(is.numeric, round, digits = 0)
+IE2<-data.frame("Location" = c("Kitchen","Corridor","Meeting Room","Collaborative Work","Quiet Work","Desks"), "Number_of_Interactions" = c(sum(total_2$Location == "Kitchen"),sum(total_2$Location == "Corridor"),sum(total_2$Location == "Meeting Room"),sum(total_2$Location == "Collaborative Work"),sum(total_2$Location == "Quiet Work"),sum(total_2$Location == "Desks")), "Weighting_Factor" = c(ki,co,mr,cw,qw,de))
+IE<-merge(IE1,IE2,by ="Location")
+IE$Interaction_Efficiency<-IE$Number_of_Interactions*IE$Weighting_Factor
+IE$Average_Duration_Seconds<-IE$Total_Duration_seconds/IE$Number_of_Interactions
+IE<- IE %>%
+  adorn_totals("row")
+Interaction_Efficiency<-sum(IE$Interaction_Efficiency)
+```
+
+*Interaction Efficiency Table:*
+```{r}
+IE <- IE %>% 
+  mutate_if(is.numeric, round, digits = 0)
+pdf("Interaction Efficiency.pdf", height=11, width=15)
 grid.table(IE)
 dev.off()
 ```
 
+
+*Number of Interactions Bar Chart:*
+```{r}
+ggplot(data=head(IE,6),aes(x=reorder(Location, -Number_of_Interactions), y=Number_of_Interactions, fill = Location))+
+  geom_bar(stat = "identity")+
+  theme_minimal()+
+  xlab("Location")+
+  ylab("Number of Interactions")
+```
+
+*Average duration of Interactions Bar Chart:*
+```{r}
+ggplot(data=head(IE,6),aes(x=reorder(Location, -Average_Duration_Seconds), y=Average_Duration_Seconds, fill = Location))+
+  geom_bar(stat = "identity")+
+  theme_minimal()+
+  xlab("Location")+
+  ylab("Average Duration /seconds")
+```
+
+*Total duration of Interactions Bar Chart:*
+```{r}
+ggplot(data=head(IE,6),aes(x=reorder(Location, -Total_Duration_seconds), y=Total_Duration_seconds/3600, fill = Location))+
+  geom_bar(stat = "identity")+
+  theme_minimal()+
+  xlab("Location")+
+  ylab("Total Duration /hours")
+```
+
+
 *Creating KPI Table:*
 ```{r}
-KPIs<-data.frame("KPI" = c("Average Daily Journey Time (minutes)", "Average Daily Journey Distance (metres)", "Interaction Impact (no units)"),"Value"=c(Average_Daily_Journey_Time,Average_Daily_Journey_Distance,Interaction_Impact))
+KPIs<-data.frame("KPI" = c("Average Daily Journey Time (minutes)", "Average Daily Journey Distance (metres)", "Interaction Impact (no units)"),"Value"=c(Average_Daily_Journey_Time,Average_Daily_Journey_Distance,Interaction_Efficiency))
 KPIs <- KPIs %>% 
   mutate_if(is.numeric, round, digits = 0)
 pdf("KPIs.pdf", height=11, width=8.5)
